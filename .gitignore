@@ -1,2 +1,7 @@
 node_modules
 dist
+
+# kanbot
+.kanbot/state.json
+.kanbot/logs/
+.kanbot/daemon.pid
