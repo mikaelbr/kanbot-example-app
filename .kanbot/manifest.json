@@ -1,5 +1,5 @@
 {
-	"version": "0.4.1",
+	"version": "0.5.1",
 	"files": {
 		".agents/skills/approach-designer/SKILL.md": "d932ed30a58cb32dd91ec03ddd2b1c6c59f77714",
 		".agents/skills/issue-splitting/SKILL.md": "8d8651621721c530522d83edb9530b622df275df",
