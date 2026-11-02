@@ -1,0 +1,18 @@
+body {
+	font-family: system-ui, sans-serif;
+	max-width: 40rem;
+	margin: 2rem auto;
+	padding: 0 1rem;
+}
+
+form,
+fieldset {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-bottom: 1rem;
+}
+
+[aria-pressed="true"] {
+	font-weight: bold;
+}

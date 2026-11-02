@@ -1,0 +1,5 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"files": { "includes": ["**", "!dist", "!.claude", "!.codex", "!.kanbot"] },
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true }
+}
