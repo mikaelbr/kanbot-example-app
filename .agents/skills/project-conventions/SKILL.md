@@ -1,4 +1,5 @@
 ---
+
 name: project-conventions
 description: This project's stack, exact commands (install, run, test, lint, typecheck, build), code conventions and recorded decisions. Read first before planning, implementing, reviewing or fixing anything in this repository, and whenever you need to know how to run tests or the project.
 ---
