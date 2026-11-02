@@ -1,12 +1,9 @@
 ---
-
 name: project-conventions
 description: This project's stack, exact commands (install, run, test, lint, typecheck, build), code conventions and recorded decisions. Read first before planning, implementing, reviewing or fixing anything in this repository, and whenever you need to know how to run tests or the project.
 ---
 
 # Project conventions
-
-> **TEMPLATE — fill this in.** Replace every `<placeholder>` with the real value for this repository and delete lines that do not apply. Agents treat this file as the source of truth; wrong commands here cause wrong work everywhere. Until it is filled in, agents must discover commands from manifests and CI config and say so in their output.
 
 ## Instructions for agents
 
@@ -16,52 +13,56 @@ description: This project's stack, exact commands (install, run, test, lint, typ
 
 ## Product
 
-- What it is: `<one sentence: what the product does and for whom>`
-- Primary users: `<roles>`
-- Language of what users see: `<e.g. Norwegian bokmål, English>`
+- What it is: a reading list in the browser. Add books, mark them read, filter by read state.
+- Primary users: one person tracking their own reading. No accounts.
+- Language of what users see: English.
 
 ## Stack
 
-- Language and runtime: `<e.g. TypeScript 5 on Bun, Swift 6, Python 3.13>`
-- Main parts: `<one line each: app, service, library, site…>`
-- Package manager or build tool: `<use only this one>`
+- Language and runtime: TypeScript, React 19, built with Vite. Runs in the browser only.
+- Main parts: one single-page app in `src/`. Data lives in `localStorage`.
+- Package manager: pnpm. Never npm or yarn.
 
 ## Commands
 
-| Task        | Command                         |
-| ----------- | ------------------------------- |
-| Install     | `<install dependencies>`        |
-| Run locally | `<start it, and where to look>` |
-| Test (all)  | `<run all tests>`               |
-| Test (one)  | `<run one file or test>`        |
-| Lint        | `<lint>`                        |
-| Format      | `<format>`                      |
-| Typecheck   | `<typecheck>`                   |
-| Build       | `<build>`                       |
+| Task        | Command                                        |
+| ----------- | ---------------------------------------------- |
+| Install     | `pnpm install`                                 |
+| Run locally | `pnpm dev`, then open http://localhost:5173    |
+| Test (all)  | `pnpm test`                                    |
+| Test (one)  | `pnpm vitest run src/App.test.tsx -t "<name>"` |
+| Lint        | `pnpm lint`                                    |
+| Format      | `pnpm format`                                  |
+| Typecheck   | `pnpm typecheck`                               |
+| Build       | `pnpm build`                                   |
 
-Add rows the project needs (migrations, seed data, end-to-end tests…). Environment: `<how to get a working local setup>`
+Environment: Node 22+ and pnpm 10. No services or env vars needed.
 
 ## Layout
 
 ```
-<dir/   what lives here>
+src/lib/          pure logic and storage, no React
+src/components/   React components, one per file
+src/App.tsx       state and wiring
+src/*.test.ts(x)  tests sit next to the code
 ```
 
 ## Code conventions
 
-- Naming: `<files, types, functions>`
-- Error handling: `<how errors are raised and shown>`
-- Tests: `<framework, where tests live, helpers>`
+- Naming: components in `PascalCase.tsx` with named exports. Other files `camelCase.ts`.
+- State: book changes are pure functions in `src/lib/books.ts` that return a new array. Components call them; they don't change books themselves.
+- Errors: show input errors next to the form with `role="alert"`. Don't use `alert()`.
+- Tests: Vitest with Testing Library. Query by role or label, as a user would. Test pure logic in `src/lib` directly.
+- Accessibility: every input has a label. Toggle buttons use `aria-pressed`. Biome's a11y rules must pass.
 - Commits: Conventional Commits (`feat`, `fix`, `refactor`, `test`, `docs`, `build`, `ci`, `chore`) with a scope.
-- Do not: `<things that look tempting but are wrong here>`
+- Do not: add a state library, a router or a CSS framework without a plan that asks for it.
 
 ## Decisions
 
-Record decisions that agents should not relitigate. One line each, newest first.
-
-- `<YYYY-MM-DD>`: `<decision>` because `<reason>`.
+- 2026-11-02: `localStorage`, no backend, because the app is for one person on one device.
+- 2026-11-02: Biome for lint and format, not ESLint and Prettier, because one tool is enough.
 
 ## Gotchas
 
-- `<e.g. tests need a local database running>`
-- `<e.g. generated files you must never edit>`
+- `localStorage` is shared between tests. `src/test-setup.ts` clears it after each test; keep it that way.
+- `crypto.randomUUID()` needs a secure context. It works on localhost, not on plain http hosts.

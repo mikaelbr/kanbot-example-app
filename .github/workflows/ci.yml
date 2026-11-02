@@ -1,5 +1,3 @@
-# Starter CI. Agents read failing checks and fix them, so keep this meaningful:
-# replace the steps with your stack's install, lint and test commands.
 name: ci
 on:
   pull_request:
@@ -10,14 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
-        if: hashFiles('package.json') != ''
-      - name: Install
-        if: hashFiles('package.json') != ''
-        run: bun install
-      - name: Lint
-        if: hashFiles('package.json') != ''
-        run: bun run --if-present lint
-      - name: Test
-        if: hashFiles('package.json') != ''
-        run: bun run --if-present test
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
