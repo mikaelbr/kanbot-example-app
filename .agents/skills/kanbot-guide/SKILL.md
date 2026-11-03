@@ -43,11 +43,11 @@ Agents never get a GitHub token. The daemon does every comment, push and PR. Onl
 Go step by step. Run each command, check its output, then go on. If `.kanbot/config.yml` exists, run `kanbot doctor` first and skip what passes.
 
 1. **Requirements.** Bun 1.3+, `gh` logged in, `claude` or `codex` logged in with a subscription (not an API key). Run `gh auth refresh -s project`.
-2. **Provider.** Ask which subscription they have, then `bunx kanbot init --provider claude|codex` in the repo root.
+2. **Init.** Best: have them run `bunx kanbot init` in their own terminal. It asks for provider, identity, options, capabilities and the board. Without a terminal, ask which subscription they have and run `bunx kanbot init --yes --provider claude|codex`; then go on with the steps below.
 3. **Conventions.** Fill in `.agents/skills/project-conventions/SKILL.md` with them: stack, commands to test, lint and typecheck. Adjust `.github/workflows/ci.yml` to run the same. Every agent reads this first. Draft it from manifests and CI, ask what you can't find, and have them run each command. Link `project-conventions`.
 4. **Capabilities.** kanbot runs the process; the repo's own skills and agents do the work. Ask which skills they have for proving acceptance criteria (`verify`), technical review (`review`) and something a human can try (`preview`), and map them under `capabilities` in `.kanbot/config.yml`. See [Capabilities](#capabilities).
-5. **Board.** `kanbot board create`, or `kanbot board link --owner <login> --number <n>` for an existing project. Have them enable the four built-in project workflows it prints; they can't be set through the API.
-6. **Options.** Go through [Choose options](#choose-options). For app mode, run `kanbot app create` and have them install the app on the repo.
+5. **Board.** Skip if `init` made one. Otherwise `kanbot board create`, or `kanbot board link --owner <login> --number <n>` for an existing project. Have them enable the four built-in project workflows it prints; they can't be set through the API.
+6. **Options.** Skip what `init` asked. Otherwise go through [Choose options](#choose-options). For app mode, run `kanbot app create` and have them install the app on the repo.
 7. **Commit and push** the kanbot files. Agents only see what's on the pushed base branch.
 8. **Check.** `kanbot doctor` until it passes, then `kanbot run --once --dry-run`, then `kanbot run`.
 9. **First card.** Have them write an issue, put it in Planning and read the plan. Point to `workflow`.
@@ -69,16 +69,17 @@ capabilities:
 
 Ask only about what matters to them. Defaults are fine for the rest. Options live in `.kanbot/config.yml`; restart the daemon after changes.
 
-| Option                             | Ask                                                       | Recommend                                                                                                                       |
-| ---------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `identity.mode` (`user` \| `app`)  | Should kanbot talk as you, or as its own bot?             | `app`: clear who said what, GitHub notifies you, and you can approve its PRs. `user` for zero setup. Commits are yours in both. |
-| `merge.onApproval`, `merge.method` | Merge by approving the PR, or press merge yourself?       | `true` with `app` mode. In `user` mode only another collaborator can approve.                                                   |
-| `provider`                         | Claude or ChatGPT subscription?                           | Whichever they pay for.                                                                                                         |
-| `concurrency`                      | How many agents at once?                                  | Default 3. Lower on a small machine or near usage limits.                                                                       |
-| `review.copilot`                   | Want GitHub Copilot as an extra reviewer? (costs credits) | Off unless they have a paid Copilot plan.                                                                                       |
-| `notify.desktop`, `notify.webhook` | Where do you want to hear that a PR is ready?             | Desktop. Add an ntfy.sh webhook for phone alerts.                                                                               |
-| `codex.networkAccess`              | Do agents need to install packages? (Codex only)          | Off unless installs fail.                                                                                                       |
-| `explore:N` label                  | Want several approaches built for some issues?            | Per issue, not config.                                                                                                          |
+| Option                             | Ask                                                                  | Recommend                                                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `identity.mode` (`user` \| `app`)  | Should kanbot talk as you, or as its own bot?                        | `app`: clear who said what, GitHub notifies you, and you can approve its PRs. `user` for zero setup. Commits are yours in both. |
+| `merge.onApproval`, `merge.method` | Merge by approving the PR, or press merge yourself?                  | `true` with `app` mode. In `user` mode only another collaborator can approve.                                                   |
+| `provider`                         | Claude or ChatGPT subscription?                                      | Whichever they pay for.                                                                                                         |
+| `concurrency`                      | How many agents at once?                                             | Default 3. Lower on a small machine or near usage limits.                                                                       |
+| `wip.awaitingHuman`                | How many items can wait on you before agents stop starting new work? | 5 for a solo builder. Off (`null`) by default. Optional: same limit on the board's Review column (column menu → Set limit).     |
+| `review.copilot`                   | Want GitHub Copilot as an extra reviewer? (costs credits)            | Off unless they have a paid Copilot plan.                                                                                       |
+| `notify.desktop`, `notify.webhook` | Where do you want to hear that a PR is ready?                        | Desktop. Add an ntfy.sh webhook for phone alerts.                                                                               |
+| `codex.networkAccess`              | Do agents need to install packages? (Codex only)                     | Off unless installs fail.                                                                                                       |
+| `explore:N` label                  | Want several approaches built for some issues?                       | Per issue, not config.                                                                                                          |
 
 ### Who does what
 
@@ -105,8 +106,9 @@ Warn: never enable the branch rule "Require approval of the most recent reviewab
 
 1. `kanbot doctor`: prints a fix for each failed check.
 2. `kanbot status`: board by column, what waits on the user (oldest first), daemon, failures, rate-limit pause.
-3. `.kanbot/logs/*.jsonl`: full agent transcripts.
-4. `needs-human` label: the issue has a comment saying why. Fix the cause, then remove the label to retry.
-5. Nothing happens: is the daemon running, are kanbot files pushed to the base branch, is the card in an active column?
-6. Card stays in Ready: the plan has open questions, or the issue is blocked by open issues. kanbot commented why. Answer questions in Planning; blocked cards start when the blockers close.
-7. Agent didn't use a skill: is it mapped under `capabilities`, does its `when` fit, and is it committed?
+3. `kanbot report`: merged PRs, cycle time, wait on the user, fix loops and `needs-human` causes for the last 7 days. `--post` adds it to the board's Status updates.
+4. `.kanbot/logs/*.jsonl`: full agent transcripts.
+5. `needs-human` label: the issue has a comment saying why. Fix the cause, then remove the label to retry.
+6. Nothing happens: is the daemon running, are kanbot files pushed to the base branch, is the card in an active column?
+7. Card stays in Ready: the plan has open questions, or the issue is blocked by open issues. kanbot commented why. Answer questions in Planning; blocked cards start when the blockers close.
+8. Agent didn't use a skill: is it mapped under `capabilities`, does its `when` fit, and is it committed?
